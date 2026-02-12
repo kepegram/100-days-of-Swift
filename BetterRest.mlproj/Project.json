@@ -1,0 +1,29 @@
+{
+  "activityEntities" : [
+    "projectCreated",
+    [
+      {
+        "createdDate" : "2026-02-12T15:41:34Z",
+        "event" : "projectCreated",
+        "id" : "583BA70A-75FF-4944-B5F9-D3F0E7DAE401",
+        "subtitle" : "BetterRest",
+        "title" : "Project Created"
+      }
+    ]
+  ],
+  "authorName" : "Kadin Pegram",
+  "createdDate" : "2026-02-12T15:41:34Z",
+  "description" : "",
+  "id" : "10AC3904-91A7-4247-A424-8956F321B154",
+  "license" : "",
+  "location" : "",
+  "modifiedDate" : "2026-02-12T15:41:34Z",
+  "projectName" : "BetterRest",
+  "settingsEntity" : {
+    "snapshotOnExtendTraining" : true,
+    "snapshotOnResumeTraining" : false
+  },
+  "taskType" : "generalRegresor",
+  "title" : "Tabular Regression",
+  "version" : "1.1"
+}
