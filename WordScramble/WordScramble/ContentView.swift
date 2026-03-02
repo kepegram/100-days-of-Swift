@@ -16,6 +16,8 @@ struct ContentView: View {
     @State private var errorMessage = ""
     @State private var showingError = false
     
+    @State private var score = 0
+    
     var body: some View {
         NavigationStack {
             List {
@@ -33,12 +35,22 @@ struct ContentView: View {
                         
                     }
                 }
+                
+                Section("Score") {
+                    Text("\(score)")
+                }
+                
             }
             .navigationTitle(rootWord)
             .onSubmit(addNewWord)
             .onAppear(perform: startGame)
             .alert(errorTitle, isPresented: $showingError) { } message: {
                 Text(errorMessage)
+            }
+            .toolbar {
+                Button("New Word") {
+                    startGame()
+                }
             }
         }
     }
@@ -47,6 +59,16 @@ struct ContentView: View {
         let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         
         guard answer.count > 0 else { return }
+        
+        guard answer.count >= 3 else {
+            wordError(title: "Word too short", message: "Must be at least 3 letters.")
+            return
+        }
+               
+        guard answer != rootWord else {
+            wordError(title: "Same as root word", message: "You can't use the original word!")
+            return
+        }
         
         guard isOriginal(word: answer) else {
             wordError(title: "Word used already", message: "Be more original!")
@@ -65,12 +87,16 @@ struct ContentView: View {
         
         withAnimation {
             usedWords.insert(answer, at: 0)
+            score += answer.count
         }
         
         newWord = ""
     }
     
     func startGame() {
+        score = 0
+        usedWords.removeAll()
+        
         if let startWordsURL = Bundle.main.url(forResource: "start", withExtension: "txt") {
             if let startWords = try? String(contentsOf: startWordsURL) {
                 let allWords = startWords.components(separatedBy: "\n")
@@ -103,7 +129,13 @@ struct ContentView: View {
     func isReal(word: String) -> Bool {
         let checker = UITextChecker()
         let range = NSRange(location: 0, length: word.utf16.count)
-        let misspelledRange = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
+        let misspelledRange = checker.rangeOfMisspelledWord(
+            in: word,
+            range: range,
+            startingAt: 0,
+            wrap: false,
+            language: "en"
+        )
         return misspelledRange.location == NSNotFound
     }
     
