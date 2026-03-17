@@ -25,11 +25,8 @@ struct MissionView: View {
                     .containerRelativeFrame(.horizontal) { width, axis in
                         width * 0.6
                     }
-                
-                Rectangle()
-                    .frame(height: 2)
-                    .foregroundStyle(.lightBackground)
-                    .padding(.vertical)
+            
+                Text(mission.formattedLaunchDate)
                 
                 VStack(alignment: .leading) {
                     Rectangle()
@@ -53,31 +50,7 @@ struct MissionView: View {
                 }
                 .padding(.horizontal)
                 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
-                        ForEach(crew, id: \.role) { crewMember in
-                            NavigationLink {
-                                AstronautView(astronaut: crewMember.astronaut)
-                            } label: {
-                                HStack {
-                                    Image(crewMember.astronaut.id)
-                                        .resizable()
-                                        .frame(width: 104, height: 72)
-                                        .clipShape(.capsule)
-                                        .overlay(
-                                            Capsule()
-                                                .strokeBorder(.white, lineWidth: 1)
-                                        )
-                                    
-                                    VStack(alignment: .leading) {
-                                        Text(crewMember.role)
-                                            .foregroundStyle(.white.opacity(0.5))
-                                    }
-                                }
-                                .padding(.horizontal)
-                            }}
-                    }
-                }
+                CrewView(crew: crew)
             }
             .padding(.bottom)
         }
@@ -100,9 +73,9 @@ struct MissionView: View {
 }
 
 #Preview {
-    let missions: [Mission] = Bundle.main.decode("mission.json")
+    let missions: [Mission] = Bundle.main.decode("missions.json")
     let astronauts: [String: Astronaut] = Bundle.main.decode("astronauts.json")
     
-    return MissionView(mission: missions[0], astronauts: astronauts)
+    return MissionView(mission: missions[1], astronauts: astronauts)
         .preferredColorScheme(.dark)
 }
