@@ -12,7 +12,7 @@ struct CheckoutView: View {
     
     @State private var confirmationMessage = ""
     @State private var showingConfirmation = false
-
+    
     var body: some View {
         ScrollView {
             VStack {
@@ -27,12 +27,12 @@ struct CheckoutView: View {
                     ProgressView()
                 }
                 .frame(height: 233)
-
+                
                 Text(
                     "Your total: \(order.cost, format: .currency(code: "USD"))"
                 )
                 .font(.title)
-
+                
                 Button("Place Order") {
                     Task {
                         await placeOrder()
@@ -50,7 +50,7 @@ struct CheckoutView: View {
             Text(confirmationMessage)
         }
     }
-
+    
     func placeOrder() async {
         guard let encoded = try? JSONEncoder().encode(order) else {
             print("Failed to encode order")
@@ -69,10 +69,15 @@ struct CheckoutView: View {
             confirmationMessage = "Your order for \(decodedOrder.quantity)x \(Order.types[decodedOrder.type].lowercased()) cupcakes is on its way!"
             showingConfirmation = true
         } catch {
-            print("Failed: \(error.localizedDescription)")
+            if let urlError = error as? URLError, urlError.code == .notConnectedToInternet {
+                print("No internet connection: \(urlError)")
+            } else {
+                print("Failed: \(error.localizedDescription)")
+            }
         }
     }
 }
+
 
 #Preview {
     CheckoutView(order: Order())
