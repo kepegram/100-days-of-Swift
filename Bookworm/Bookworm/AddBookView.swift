@@ -41,17 +41,23 @@ struct AddBookView: View {
                 
                 Section {
                     Button("Save") {
-                        let newBook = Book(title: title, author: author, genre: genre, review: review, rating: rating)
+                        let newBook = Book(title: title, author: author, genre: genre, review: review, rating: rating, date: Date.now)
                         modelContext.insert(newBook)
                         
                         try? modelContext.save()
                         
                         dismiss()
                     }
+                    .disabled(!isValid)
                 }
             }
             .navigationTitle("Add Book")
         }
+    }
+    
+    var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !author.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 
