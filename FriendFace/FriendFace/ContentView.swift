@@ -5,10 +5,12 @@
 //  Created by Kadin Pegram on 4/16/26.
 //
 
+import SwiftData
 import SwiftUI
 
 struct ContentView: View {
-    @State private var users = [User]()
+    @Environment(\.modelContext) private var modelContext
+    @Query private var users: [User]
 
     var body: some View {
         NavigationStack {
@@ -23,14 +25,11 @@ struct ContentView: View {
                             Text(item.name)
                                 .font(.headline)
 
-                            VStack {
-                                Text("Age \(item.age)")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
+                            Text("Age \(item.age)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    .padding(.vertical, 6)
                 }
             }
             .navigationTitle("FriendFace")
@@ -58,13 +57,29 @@ struct ContentView: View {
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
 
-            let decodedResponse = try JSONDecoder().decode(
-                [User].self,
-                from: data
-            )
-            users = decodedResponse
+            let decoded = try JSONDecoder().decode([UserDTO].self, from: data)
+
+            for dto in decoded {
+                let user = User(
+                    id: dto.id,
+                    name: dto.name,
+                    age: dto.age,
+                    company: dto.company,
+                    isActive: dto.isActive
+                )
+
+                modelContext.insert(user)
+
+                let friends = dto.friends.map {
+                    Friend(id: $0.id, name: $0.name)
+                }
+
+                user.friends.append(contentsOf: friends)
+            }
+
+            try? modelContext.save()
         } catch {
-            print("Invalid data")
+            print("Failed to load data: \(error)")
         }
     }
 }
