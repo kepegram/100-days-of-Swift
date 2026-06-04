@@ -12,6 +12,8 @@ struct Person: Identifiable, Codable {
     let id: UUID
     let name: String
     let imageData: Data
+    let latitude: Double
+    let longitude: Double
 }
 
 struct PersonCard: View {

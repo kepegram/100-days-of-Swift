@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var newImageData: Data?
     @State private var newImageName = ""
 
+    let locationFetcher = LocationFetcher()
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 16) {
@@ -56,6 +58,9 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Remember Me")
+            .onAppear {
+                locationFetcher.start()
+            }
             .background(Color(.systemGroupedBackground))
             .onChange(of: selectedItem, loadImage)
             .alert("Name this picture", isPresented: $showingNamePrompt) {
@@ -80,12 +85,17 @@ struct ContentView: View {
     }
 
     func saveImage() {
-        guard let imageData = newImageData else { return }
+        guard
+            let imageData = newImageData,
+            let location = locationFetcher.lastKnownLocation
+        else { return }
 
         let person = Person(
             id: UUID(),
             name: newImageName,
-            imageData: imageData
+            imageData: imageData,
+            latitude: location.latitude,
+            longitude: location.longitude
         )
 
         people.append(person)
