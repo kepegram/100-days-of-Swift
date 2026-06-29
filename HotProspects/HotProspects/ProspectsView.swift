@@ -16,8 +16,16 @@ struct ProspectsView: View {
         case none, contacted, uncontacted
     }
 
+    enum SortOrder: String, CaseIterable, Identifiable {
+        case name = "Name"
+        case mostRecent = "Most Recent"
+
+        var id: Self { self }
+    }
+
     @Environment(\.modelContext) var modelContext
-    @Query(sort: \Prospect.name) var prospects: [Prospect]
+    @Query var prospects: [Prospect]
+    @AppStorage("sortOrder") private var sortOrder = SortOrder.name
     @State private var isShowingScanner = false
     @State private var selectedProspects = Set<Prospect>()
 
@@ -30,26 +38,37 @@ struct ProspectsView: View {
         case .contacted:
             "Contacted people"
         case .uncontacted:
-            "Uncontacted people"
+            "People to contact"
+        }
+    }
+
+    var sortedProspects: [Prospect] {
+        switch sortOrder {
+        case .name:
+            prospects.sorted {
+                $0.name.localizedStandardCompare($1.name) == .orderedAscending
+            }
+        case .mostRecent:
+            prospects.sorted {
+                $0.dateAdded > $1.dateAdded
+            }
         }
     }
 
     var body: some View {
         NavigationStack {
-            List(prospects, selection: $selectedProspects) { prospect in
-                VStack(alignment: .leading) {
-                    Text(prospect.name)
-                        .font(.headline)
-
-                    Text(prospect.emailAddress)
-                        .foregroundStyle(.secondary)
+            List(sortedProspects, selection: $selectedProspects) { prospect in
+                NavigationLink {
+                    EditProspectView(prospect: prospect)
+                } label: {
+                    ProspectRow(prospect: prospect, showsContactedStatus: filter == .none)
                 }
                 .swipeActions {
                     Button("Delete", systemImage: "trash", role: .destructive) {
                         modelContext.delete(prospect)
                     }
                     if prospect.isContacted {
-                        Button("Mark Uncontacted", systemImage: "person.crop.circle.badge.xmark") {
+                        Button("Move to To Contact", systemImage: "person.crop.circle.badge.xmark") {
                             prospect.isContacted.toggle()
                         }
                         .tint(.blue)
@@ -78,6 +97,16 @@ struct ProspectsView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     EditButton()
                 }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                        Picker("Sort contacts", selection: $sortOrder) {
+                            ForEach(SortOrder.allCases) { order in
+                                Text(order.rawValue)
+                            }
+                        }
+                    }
+                }
                 
                 if selectedProspects.isEmpty == false {
                     ToolbarItem(placement: .bottomBar) {
@@ -104,8 +133,7 @@ struct ProspectsView: View {
             _prospects = Query(
                 filter: #Predicate {
                     $0.isContacted == showContactedOnly
-                },
-                sort: [SortDescriptor(\Prospect.name)]
+                }
             )
         }
     }
@@ -164,6 +192,66 @@ struct ProspectsView: View {
                 }
             }
         }
+    }
+}
+
+struct ProspectRow: View {
+    let prospect: Prospect
+    let showsContactedStatus: Bool
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(prospect.name)
+                    .font(.headline)
+
+                Text(prospect.emailAddress)
+                    .foregroundStyle(.secondary)
+            }
+
+            if showsContactedStatus {
+                Spacer()
+
+                Image(systemName: prospect.isContacted ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .foregroundStyle(prospect.isContacted ? .green : .secondary)
+                    .accessibilityLabel(prospect.isContacted ? "Contacted" : "Not contacted")
+            }
+        }
+    }
+}
+
+struct EditProspectView: View {
+    @Environment(\.dismiss) var dismiss
+
+    let prospect: Prospect
+
+    @State private var name: String
+    @State private var emailAddress: String
+
+    var body: some View {
+        Form {
+            TextField("Name", text: $name)
+                .textContentType(.name)
+
+            TextField("Email address", text: $emailAddress)
+                .textContentType(.emailAddress)
+                .textInputAutocapitalization(.never)
+                .keyboardType(.emailAddress)
+        }
+        .navigationTitle("Edit Prospect")
+        .toolbar {
+            Button("Save") {
+                prospect.name = name
+                prospect.emailAddress = emailAddress
+                dismiss()
+            }
+        }
+    }
+
+    init(prospect: Prospect) {
+        self.prospect = prospect
+        _name = State(initialValue: prospect.name)
+        _emailAddress = State(initialValue: prospect.emailAddress)
     }
 }
 
