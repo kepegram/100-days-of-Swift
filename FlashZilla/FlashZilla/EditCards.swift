@@ -21,15 +21,16 @@ struct EditCards: View {
                     TextField("Prompt", text: $newPrompt)
                     TextField("Answer", text: $newAnswer)
                     Button("Add Card", action: addCard)
+                    Button("Cancel", role: .destructive, action: done)
                 }
                 
                 Section {
-                    ForEach(0..<cards.count, id: \.self) { index in
+                    ForEach(cards) { card in
                         VStack(alignment: .leading) {
-                            Text(cards[index].prompt)
+                            Text(card.prompt)
                                 .font(.headline)
                             
-                            Text(cards[index].answer)
+                            Text(card.answer)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -49,17 +50,11 @@ struct EditCards: View {
     }
     
     func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
-        }
+        cards = CardStore.load()
     }
     
     func saveData() {
-        if let data = try? JSONEncoder().encode(cards) {
-            UserDefaults.standard.set(data, forKey: "Cards")
-        }
+        CardStore.save(cards)
     }
     
     func addCard() {
@@ -71,6 +66,8 @@ struct EditCards: View {
         
         let card = Card(prompt: trimmedPrompt, answer: trimmedAnswer)
         cards.insert(card, at: 0)
+        newPrompt = ""
+        newAnswer = ""
         saveData()
     }
     

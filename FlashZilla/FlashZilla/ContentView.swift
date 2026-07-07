@@ -41,14 +41,14 @@ struct ContentView: View {
                         .clipShape(.capsule)
                 }
                 ZStack {
-                    ForEach(0..<cards.count, id: \.self) { index in
-                        CardView(card: cards[index]) {
+                    ForEach(cards) { card in
+                        CardView(card: card) { isCorrect in
                             withAnimation {
-                                removeCard(at: index)
+                                removeCard(card, isCorrect: isCorrect)
                             }
                         }
-                        .stacked(at: index, in: cards.count)
-                        .allowsHitTesting(index == cards.count - 1)
+                        .stacked(at: position(of: card), in: cards.count)
+                        .allowsHitTesting(card.id == cards.last?.id)
                     }
                 }
                 .allowsHitTesting(timeRemaining > 0)
@@ -127,8 +127,14 @@ struct ContentView: View {
         .onAppear(perform: resetCards)
     }
 
-    func removeCard(at index: Int) {
-        cards.remove(at: index)
+    func removeCard(_ card: Card, isCorrect: Bool) {
+        guard let index = cards.firstIndex(where: { $0.id == card.id }) else { return }
+        
+        let removedCard = cards.remove(at: index)
+        
+        if isCorrect == false {
+            cards.insert(removedCard, at: 0)
+        }
         
         if cards.isEmpty {
             isActive = false
@@ -142,11 +148,11 @@ struct ContentView: View {
     }
     
     func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
-        }
+        cards = CardStore.load()
+    }
+    
+    func position(of card: Card) -> Int {
+        cards.firstIndex { $0.id == card.id } ?? 0
     }
 }
 
